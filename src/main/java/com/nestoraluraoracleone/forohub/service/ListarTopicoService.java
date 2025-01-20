@@ -1,6 +1,7 @@
 package com.nestoraluraoracleone.forohub.service;
 
 import com.nestoraluraoracleone.forohub.dto.ListarTopicoDTO;
+import com.nestoraluraoracleone.forohub.exception.RecursoNoEncontradoException;
 import com.nestoraluraoracleone.forohub.model.Topico;
 import com.nestoraluraoracleone.forohub.repository.TopicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,6 @@ public class ListarTopicoService {
 
     public List<ListarTopicoDTO> listarTopicos() {
         List<Topico> topicos = topicoRepository.findAll();
-
-        // Convertir cada tópico a su DTO correspondiente
         return topicos.stream().map(topico -> new ListarTopicoDTO(
                 topico.getId(),
                 topico.getTitulo(),
@@ -32,7 +31,7 @@ public class ListarTopicoService {
 
     public ListarTopicoDTO obtenerPorId(Long id) {
         Topico topico = topicoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El tópico con ID " + id + " no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("El tópico con ID " + id + " no existe."));
 
         return new ListarTopicoDTO(
                 topico.getId(),
@@ -45,3 +44,4 @@ public class ListarTopicoService {
         );
     }
 }
+

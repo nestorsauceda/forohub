@@ -1,6 +1,8 @@
 package com.nestoraluraoracleone.forohub.service;
 
 import com.nestoraluraoracleone.forohub.dto.ActualizarTopicoDTO;
+import com.nestoraluraoracleone.forohub.exception.DatosInvalidosException;
+import com.nestoraluraoracleone.forohub.exception.RecursoNoEncontradoException;
 import com.nestoraluraoracleone.forohub.model.Curso;
 import com.nestoraluraoracleone.forohub.model.Topico;
 import com.nestoraluraoracleone.forohub.model.Usuario;
@@ -25,23 +27,19 @@ public class ActualizarTopicoService {
     private CursoRepository cursoRepository;
 
     public void actualizarTopico(Long id, ActualizarTopicoDTO topicoDTO) {
-        // Verificar existencia del tópico
         Topico topico = topicoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El tópico con ID " + id + " no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("El tópico con ID " + id + " no existe."));
 
-        // Verificar duplicados (exceptuando el mismo tópico que se está actualizando)
         Optional<Topico> duplicado = topicoRepository.findByTituloAndMensaje(topicoDTO.titulo(), topicoDTO.mensaje());
         if (duplicado.isPresent() && !duplicado.get().getId().equals(id)) {
-            throw new IllegalArgumentException("Ya existe un tópico con el mismo título y mensaje.");
+            throw new DatosInvalidosException("Ya existe un tópico con el mismo título y mensaje.");
         }
 
-        // Obtener autor y curso
         Usuario autor = usuarioRepository.findById(topicoDTO.autorId())
-                .orElseThrow(() -> new IllegalArgumentException("El autor no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("El autor con ID " + topicoDTO.autorId() + " no existe."));
         Curso curso = cursoRepository.findById(topicoDTO.cursoId())
-                .orElseThrow(() -> new IllegalArgumentException("El curso no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("El curso con ID " + topicoDTO.cursoId() + " no existe."));
 
-        // Actualizar los datos del tópico
         topico.setTitulo(topicoDTO.titulo());
         topico.setMensaje(topicoDTO.mensaje());
         topico.setEstado(topicoDTO.status());
@@ -51,3 +49,4 @@ public class ActualizarTopicoService {
         topicoRepository.save(topico);
     }
 }
+

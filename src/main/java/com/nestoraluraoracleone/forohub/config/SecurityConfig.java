@@ -4,6 +4,7 @@ import com.nestoraluraoracleone.forohub.service.TokenService;
 import com.nestoraluraoracleone.forohub.service.AutenticacionService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,10 +18,12 @@ public class SecurityConfig {
 
     private final TokenService tokenService;
     private final AutenticacionService autenticacionService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    public SecurityConfig(TokenService tokenService, AutenticacionService autenticacionService) {
+    public SecurityConfig(TokenService tokenService, AutenticacionService autenticacionService, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.tokenService = tokenService;
         this.autenticacionService = autenticacionService;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
@@ -29,7 +32,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF (solo para desarrollo)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() // Permitir acceso al endpoint de autenticación
+                        .requestMatchers(HttpMethod.GET, "/topicos", "/topicos/{id}").permitAll() // Permitir acceso sin autenticación solo a GET requests
                         .anyRequest().authenticated() // Requiere autenticación para otros endpoints
+                )
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(customAuthenticationEntryPoint) // Registrar el manejador personalizado
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(tokenService, autenticacionService),
                         UsernamePasswordAuthenticationFilter.class);

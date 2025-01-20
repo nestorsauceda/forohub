@@ -1,8 +1,10 @@
 package com.nestoraluraoracleone.forohub.controller;
 
 import com.nestoraluraoracleone.forohub.dto.LoginDTO;
+import com.nestoraluraoracleone.forohub.repository.UsuarioRepository;
 import com.nestoraluraoracleone.forohub.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,9 +23,17 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository; // Inyección del repositorio
+
     @PostMapping("/login")
-    public String login(@RequestBody @Valid LoginDTO loginDTO) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginDTO loginDTO) {
         try {
+            // Verificar si el usuario existe
+            if (!usuarioRepository.findByCorreoElectronico(loginDTO.email()).isPresent()) {
+                return ResponseEntity.status(404).body("{ \"error\": \"Usuario no encontrado.\" }");
+            }
+
             // Realizar la autenticación
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password())
@@ -32,10 +42,12 @@ public class AuthController {
             // Generar el token JWT
             String token = tokenService.generarToken(auth);
 
-            // Devolver el token
-            return "Token: " + token;
+            // Devolver el token en formato JSON con tipo
+            return ResponseEntity.ok().body("{ \"token\": \"" + token + "\", \"type\": \"Bearer\" }");
+
         } catch (AuthenticationException e) {
-            return "Credenciales inválidas";
+            // Credenciales inválidas: devolver 401
+            return ResponseEntity.status(401).body("{ \"error\": \"Credenciales inválidas.\" }");
         }
     }
 }
