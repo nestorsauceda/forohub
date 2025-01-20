@@ -1,12 +1,16 @@
 package com.nestoraluraoracleone.forohub.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -18,32 +22,51 @@ public class TokenService {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    private SecretKey getSigningKey() {
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        return Keys.hmacShaKeyFor(decodedKey);
+    }
+
+    /**
+     * Genera un token JWT para el usuario autenticado.
+     */
     public String generarToken(Authentication authentication) {
-        User usuario = (User) authentication.getPrincipal();
-        return JWT.create()
-                .withSubject(usuario.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
-                .withIssuer("API Forohub")
-                .sign(Algorithm.HMAC256(secret));
+        UserDetails usuario = (UserDetails) authentication.getPrincipal();
+        Date ahora = new Date();
+        Date fechaExpiracion = new Date(ahora.getTime() + expiration);
+
+        return Jwts.builder()
+                .setSubject(usuario.getUsername()) // El username será el correo electrónico
+                .setIssuedAt(ahora)
+                .setExpiration(fechaExpiracion)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public String obtenerUsuarioDelToken(String token) {
-        return JWT.require(Algorithm.HMAC256(secret))
-                .withIssuer("API Forohub")
-                .build()
-                .verify(token)
-                .getSubject();
-    }
-
-    public boolean esTokenValido(String token) {
+    /**
+     * Valida un token JWT verificando su firma y expiración.
+     */
+    public boolean validarToken(String token) {
         try {
-            JWT.require(Algorithm.HMAC256(secret))
-                    .withIssuer("API Forohub")
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
                     .build()
-                    .verify(token);
+                    .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Extrae el usuario (subject) del token JWT.
+     */
+    public String obtenerUsuario(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
     }
 }
