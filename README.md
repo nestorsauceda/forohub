@@ -1,6 +1,6 @@
-<div style="text-align: center;">
-  <img src="img/banner.png" alt="Forohub Banner" />
-</div>
+
+  <img src="img/banner.png" alt="Forohub Banner" width="100%"/>
+
 **Forohub** - API REST para Gestión de Foros
 ---
 ### **Desafío del curso de programación backend con Java de Alura y Oracle**
