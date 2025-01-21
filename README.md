@@ -135,4 +135,4 @@ Desarrollado por Nestor Sauceda.
 ##
 
 ¡Gracias por revisar este proyecto! 😊
-por explorar este proyecto. Espero que pueda servir como inspiración o referencia para tus propias implementaciones. Si tienes alguna pregunta o sugerencia, no dudes en contactarme.
+Espero que pueda servir como inspiración o referencia para tus propias implementaciones. Si tienes alguna pregunta o sugerencia, no dudes en contactarme.
